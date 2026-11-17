@@ -1,0 +1,40 @@
+name: Build dine-atl
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-dine-atl:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential meson ninja-build pkg-config git \
+            openjdk-17-jdk libgtk-4-dev libwebkitgtk-6.0-dev \
+            libavcodec-dev libavformat-dev libavutil-dev libswscale-dev \
+            libasound2-dev libvulkan-dev libopenxr-dev libsqlite3-dev \
+            libgles2-mesa-dev libegl1-mesa-dev libwayland-dev wayland-protocols
+
+      - name: Configure Meson
+        run: meson setup builddir --prefix=$PWD/install
+
+      - name: Compile and install to staging folder
+        run: |
+          ninja -C builddir
+          ninja -C builddir install
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dine-atl-build
+          path: |
+            builddir/
+            install/
